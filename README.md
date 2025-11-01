@@ -93,6 +93,20 @@ Examples:
 - `6.2` → downloads `dfly-x86_64-6.2_REL.iso`
 - `7.0` → downloads `dfly-x86_64-7.0_REL.iso`
 
+## 🖥️ Console Setup
+
+When DragonflyBSD boots, you'll see the boot menu. For the best experience with
+the serial console:
+
+1. **Select option `9. Escape to loader prompt (also ESC)`**
+2. **Configure console output:**
+   ```
+   set console=comconsole
+   boot
+   ```
+
+This enables proper console redirection to your terminal.
+
 ## 💿 Creating a Persistent Disk
 
 To install DragonflyBSD persistently:
