@@ -12,6 +12,7 @@ interface Options {
   memory: string;
   drive?: string;
   diskFormat: string;
+  size: string;
 }
 
 async function downloadIso(url: string, outputPath?: string): Promise<string> {
@@ -117,6 +118,38 @@ function handleInput(input?: string): string {
   return input;
 }
 
+async function createDriveImageIfNeeded(
+  {
+    drive: path,
+    diskFormat: format,
+    size,
+  }: Options,
+): Promise<void> {
+  if (await Deno.stat(path!).catch(() => false)) {
+    console.log(
+      chalk.yellowBright(
+        `Drive image ${path} already exists, skipping creation.`,
+      ),
+    );
+    return;
+  }
+
+  const cmd = new Deno.Command("qemu-img", {
+    args: ["create", "-f", format, path!, size!],
+    stdin: "inherit",
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+
+  const status = await cmd.spawn().status;
+  if (!status.success) {
+    console.error(chalk.redBright("Failed to create drive image."));
+    Deno.exit(status.code);
+  }
+
+  console.log(chalk.greenBright(`Created drive image at ${path}`));
+}
+
 if (import.meta.main) {
   await new Command()
     .name("dflybsd-up")
@@ -141,6 +174,13 @@ if (import.meta.main) {
       "Disk image format (e.g., qcow2, raw)",
       {
         default: "raw",
+      },
+    )
+    .option(
+      "--size <size:string>",
+      "Size of the VM disk image to create if it doesn't exist (e.g., 20G)",
+      {
+        default: "20G",
       },
     )
     .example(
@@ -170,12 +210,17 @@ if (import.meta.main) {
         isoPath = await downloadIso(resolvedInput, options.output);
       }
 
+      if (options.drive) {
+        await createDriveImageIfNeeded(options);
+      }
+
       await runQemu(isoPath, {
         cpu: options.cpu,
         memory: options.memory,
         cpus: options.cpus,
         drive: options.drive,
         diskFormat: options.diskFormat,
+        size: options.size,
       });
     })
     .parse(Deno.args);
