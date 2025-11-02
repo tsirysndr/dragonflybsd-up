@@ -88,7 +88,6 @@ export async function runQemu(
       options.memory,
       "-smp",
       options.cpus.toString(),
-      options.cpus.toString(),
       ..._.compact([isoPath && "-cdrom", isoPath]),
       "-netdev",
       "user,id=net0,hostfwd=tcp::2222-:22",
