@@ -2,12 +2,16 @@
 
 import { Command } from "@cliffy/command";
 import { createBridgeNetworkIfNeeded } from "./src/network.ts";
+import inspect from "./src/subcommands/inspect.ts";
+import ps from "./src/subcommands/ps.ts";
+import start from "./src/subcommands/start.ts";
+import stop from "./src/subcommands/stop.ts";
 import {
   createDriveImageIfNeeded,
   downloadIso,
   emptyDiskImage,
   handleInput,
-  Options,
+  type Options,
   runQemu,
 } from "./src/utils.ts";
 
@@ -64,6 +68,26 @@ if (import.meta.main) {
       "Download URL",
       "dflybsd-up https://mirror-master.dragonflybsd.org/iso-images/dfly-x86_64-6.4.2_REL.iso",
     )
+    .example(
+      "List running VMs",
+      "dflybsd-up ps",
+    )
+    .example(
+      "List all VMs",
+      "dflybsd-up ps --all",
+    )
+    .example(
+      "Start a VM",
+      "dflybsd-up start my-vm",
+    )
+    .example(
+      "Stop a VM",
+      "dflybsd-up stop my-vm",
+    )
+    .example(
+      "Inspect a VM",
+      "dflybsd-up inspect my-vm",
+    )
     .action(async (options: Options, input?: string) => {
       const resolvedInput = handleInput(input);
       let isoPath: string | null = resolvedInput;
@@ -88,6 +112,26 @@ if (import.meta.main) {
       }
 
       await runQemu(isoPath, options);
+    })
+    .command("ps", "List all virtual machines")
+    .option("--all, -a", "Show all virtual machines, including stopped ones")
+    .action(async (options: { all: boolean }) => {
+      await ps(options.all);
+    })
+    .command("start", "Start a virtual machine")
+    .arguments("<vm-name:string>")
+    .action(async (_options: unknown, vmName: string) => {
+      await start(vmName);
+    })
+    .command("stop", "Stop a virtual machine")
+    .arguments("<vm-name:string>")
+    .action(async (_options: unknown, vmName: string) => {
+      await stop(vmName);
+    })
+    .command("inspect", "Inspect a virtual machine")
+    .arguments("<vm-name:string>")
+    .action(async (_options: unknown, vmName: string) => {
+      await inspect(vmName);
     })
     .parse(Deno.args);
 }

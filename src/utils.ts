@@ -1,6 +1,9 @@
+import { createId } from "@paralleldrive/cuid2";
 import chalk from "chalk";
 import _ from "lodash";
+import Moniker from "moniker";
 import { generateRandomMacAddress } from "./network.ts";
+import { saveInstanceState } from "./state.ts";
 
 const DEFAULT_VERSION = "6.4.2";
 
@@ -90,6 +93,7 @@ export async function runQemu(
   isoPath: string | null,
   options: Options,
 ): Promise<void> {
+  const macAddress = generateRandomMacAddress();
   const cmd = new Deno.Command(options.bridge ? "sudo" : "qemu-system-x86_64", {
     args: [
       ..._.compact([options.bridge && "qemu-system-x86_64"]),
@@ -106,7 +110,7 @@ export async function runQemu(
         ? `bridge,id=net0,br=${options.bridge}`
         : "user,id=net0,hostfwd=tcp::2222-:22",
       "-device",
-      `e1000,netdev=net0,mac=${generateRandomMacAddress()}`,
+      `e1000,netdev=net0,mac=${macAddress}`,
       "-display",
       "none",
       "-vga",
@@ -127,9 +131,26 @@ export async function runQemu(
     stdin: "inherit",
     stdout: "inherit",
     stderr: "inherit",
+  }).spawn();
+
+  await saveInstanceState({
+    id: createId(),
+    name: Moniker.choose(),
+    bridge: options.bridge,
+    macAddress,
+    memory: options.memory,
+    cpus: options.cpus,
+    cpu: options.cpu,
+    diskSize: options.size,
+    diskFormat: options.diskFormat,
+    isoPath: isoPath ? Deno.realPathSync(isoPath) : undefined,
+    drivePath: options.drive ? Deno.realPathSync(options.drive) : undefined,
+    version: DEFAULT_VERSION,
+    status: "RUNNING",
+    pid: cmd.pid,
   });
 
-  const status = await cmd.spawn().status;
+  const status = await cmd.status;
 
   if (!status.success) {
     Deno.exit(status.code);
