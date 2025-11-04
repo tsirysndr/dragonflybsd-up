@@ -66,7 +66,7 @@ dflybsd-up --cpu host --cpus 4 --memory 4G
 dflybsd-up 6.4.2 --output ~/isos/dragonfly.iso
 
 # Use a persistent disk image with custom size
-dflybsd-up --drive dragonfly.img --disk-format raw --size 30G
+dflybsd-up --image dragonfly.img --disk-format raw --size 30G
 
 # Use bridge networking
 dflybsd-up --bridge br0
@@ -75,7 +75,7 @@ dflybsd-up --bridge br0
 dflybsd-up 6.4.2 \
   --cpus 4 \
   --memory 8G \
-  --drive dragonfly.qcow2 \
+  --image dragonfly.qcow2 \
   --disk-format qcow2 \
   --size 50G \
   --bridge br0
@@ -108,7 +108,7 @@ dflybsd-up inspect my-vm
 | `--cpu`         | `-c`  | CPU type to emulate                  | `host`                  |
 | `--cpus`        | `-C`  | Number of CPU cores                  | `2`                     |
 | `--memory`      | `-m`  | Amount of memory for VM              | `2G`                    |
-| `--drive`       | `-d`  | Path to VM disk image                | None                    |
+| `--image`       | `-i`  | Path to VM disk image                | None                    |
 | `--disk-format` |       | Disk image format (qcow2, raw, etc.) | `raw`                   |
 | `--size`        |       | Size of disk image to create         | `20G`                   |
 | `--bridge`      | `-b`  | Network bridge name for networking   | None (uses NAT)         |
@@ -140,14 +140,17 @@ This enables proper console redirection to your terminal.
 
 ## �️ Virtual Machine Management
 
-The tool now includes database-backed VM management, allowing you to track and manage multiple virtual machines:
+The tool now includes database-backed VM management, allowing you to track and
+manage multiple virtual machines:
 
 ### VM Lifecycle
 
-- **Automatic Tracking**: Each VM is assigned a unique name and tracked in a local SQLite database
+- **Automatic Tracking**: Each VM is assigned a unique name and tracked in a
+  local SQLite database
 - **Persistent State**: VM configurations are preserved between sessions
 - **Status Monitoring**: Track running and stopped VMs with process IDs
-- **Resource Information**: View CPU, memory, and disk configurations for each VM
+- **Resource Information**: View CPU, memory, and disk configurations for each
+  VM
 
 ### VM Commands
 
@@ -159,12 +162,15 @@ The tool now includes database-backed VM management, allowing you to track and m
 ## 🌐 Networking Options
 
 ### Default NAT Networking
+
 By default, VMs use QEMU's user-mode networking with port forwarding:
+
 - Host port 2222 → Guest port 22 (SSH)
 - No additional configuration required
 - Works without root privileges
 
 ### Bridge Networking
+
 For more advanced networking scenarios, use bridge networking:
 
 ```bash
@@ -175,6 +181,7 @@ dflybsd-up --bridge br0
 ```
 
 Benefits of bridge networking:
+
 - VMs get IP addresses on your local network
 - Direct network access without port forwarding
 - Better performance for network-intensive applications
@@ -185,27 +192,31 @@ Benefits of bridge networking:
 To install DragonflyBSD persistently:
 
 ```bash
-# Create a disk image (done automatically with --drive if image doesn't exist)
-dflybsd-up 6.4.2 --drive dragonfly.qcow2 --disk-format qcow2 --size 30G
+# Create a disk image (done automatically with --image if image doesn't exist)
+dflybsd-up 6.4.2 --image dragonfly.qcow2 --disk-format qcow2 --size 30G
 
 # Or manually create with qemu-img
 qemu-img create -f qcow2 dragonfly.qcow2 20G
 
 # Launch with the disk attached
-dflybsd-up 6.4.2 --drive dragonfly.qcow2 --disk-format qcow2
+dflybsd-up 6.4.2 --image dragonfly.qcow2 --disk-format qcow2
 ```
 
 ## 🔐 SSH Access
 
 ### NAT Networking (Default)
-The VM automatically forwards host port 2222 to guest port 22. After configuring SSH in your DragonflyBSD installation:
+
+The VM automatically forwards host port 2222 to guest port 22. After configuring
+SSH in your DragonflyBSD installation:
 
 ```bash
 ssh -p 2222 user@localhost
 ```
 
 ### Bridge Networking
-With bridge networking, the VM gets its own IP address on your network. You can SSH directly to the VM's IP:
+
+With bridge networking, the VM gets its own IP address on your network. You can
+SSH directly to the VM's IP:
 
 ```bash
 ssh user@<vm-ip-address>
