@@ -29,7 +29,7 @@ export default async function (all: boolean) {
       vm.cpus.toString(),
       vm.memory,
       formatStatus(vm),
-      vm.pid?.toString() ?? "-",
+      formatPid(vm),
       vm.bridge ?? "-",
       formatPorts(vm.portForward),
       dayjs.utc(vm.createdAt).local().fromNow(),
@@ -37,6 +37,18 @@ export default async function (all: boolean) {
   }
 
   console.log(table.padding(2).toString());
+}
+
+function formatPid(vm: VirtualMachine) {
+  if (!vm.pid) {
+    return "-";
+  }
+
+  if (vm.status !== "RUNNING") {
+    return "-";
+  }
+
+  return vm.pid.toString();
 }
 
 function formatStatus(vm: VirtualMachine) {
