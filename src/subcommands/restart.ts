@@ -30,7 +30,7 @@ export default async function (name: string) {
 
   const qemuArgs = [
     ..._.compact([vm.bridge && "qemu-system-x86_64"]),
-    "-enable-kvm",
+    ..._.compact(Deno.build.os === "linux" && ["-enable-kvm"]),
     "-cpu",
     vm.cpu,
     "-m",
