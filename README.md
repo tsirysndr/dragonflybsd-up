@@ -2,7 +2,7 @@
 
 [![release](https://github.com/tsirysndr/dragonflybsd-up/actions/workflows/release.yml/badge.svg)](https://github.com/tsirysndr/dragonflybsd-up/actions/workflows/release.yml)
 [![JSR](https://jsr.io/badges/@tsiry/dflybsd-up)](https://jsr.io/@tsiry/dflybsd-up)
-[![deno module](https://shield.deno.dev/x/dflybsd-upup)](https://deno.land/x/dflybsd-upup)
+[![deno module](https://shield.deno.dev/x/dflybsdup)](https://deno.land/x/dflybsdup)
 ![deno compatibility](https://shield.deno.dev/deno/^2.5.6)
 
 A convenient CLI tool to quickly spin up DragonflyBSD virtual machines using
