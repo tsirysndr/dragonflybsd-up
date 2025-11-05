@@ -46,7 +46,7 @@ with database tracking, background execution, and flexible networking options.
 ## 📦 Installation
 
 ```bash
-deno install -A -g -r -f --config deno.json ./main.ts -n dflybsd-up
+deno install -A -g -r -f jsr:@tsiry/dflybsd-up
 ```
 
 ## 🚀 Usage
