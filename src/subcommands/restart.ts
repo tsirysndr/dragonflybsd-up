@@ -1,5 +1,5 @@
+import _ from "@es-toolkit/es-toolkit/compat";
 import chalk from "chalk";
-import _ from "lodash";
 import { LOGS_DIR } from "../constants.ts";
 import { getInstanceState, updateInstanceState } from "../state.ts";
 import { safeKillQemu, setupNATNetworkArgs } from "../utils.ts";
@@ -30,7 +30,7 @@ export default async function (name: string) {
 
   const qemuArgs = [
     ..._.compact([vm.bridge && "qemu-system-x86_64"]),
-    ..._.compact(Deno.build.os === "linux" && ["-enable-kvm"]),
+    ...Deno.build.os === "linux" ? ["-enable-kvm"] : [],
     "-cpu",
     vm.cpu,
     "-m",

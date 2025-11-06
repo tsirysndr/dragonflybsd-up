@@ -1,5 +1,5 @@
 import { parseFlags } from "@cliffy/flags";
-import _ from "lodash";
+import _ from "@es-toolkit/es-toolkit/compat";
 import { LOGS_DIR } from "../constants.ts";
 import type { VirtualMachine } from "../db.ts";
 import { getInstanceState, updateInstanceState } from "../state.ts";
@@ -20,7 +20,7 @@ export default async function (name: string, detach: boolean = false) {
 
   const qemuArgs = [
     ..._.compact([vm.bridge && "qemu-system-x86_64"]),
-    ..._.compact(Deno.build.os === "linux" && ["-enable-kvm"]),
+    ...Deno.build.os === "linux" ? ["-enable-kvm"] : [],
     "-cpu",
     vm.cpu,
     "-m",

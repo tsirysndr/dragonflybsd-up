@@ -1,6 +1,6 @@
+import _ from "@es-toolkit/es-toolkit/compat";
 import { createId } from "@paralleldrive/cuid2";
 import chalk from "chalk";
-import _ from "lodash";
 import Moniker from "moniker";
 import { EMPTY_DISK_THRESHOLD_KB, LOGS_DIR } from "./constants.ts";
 import { generateRandomMacAddress } from "./network.ts";
@@ -160,7 +160,7 @@ export async function runQemu(
 
   const qemuArgs = [
     ..._.compact([options.bridge && "qemu-system-x86_64"]),
-    ..._.compact(Deno.build.os === "linux" && ["-enable-kvm"]),
+    ...Deno.build.os === "linux" ? ["-enable-kvm"] : [],
     "-cpu",
     options.cpu,
     "-m",
