@@ -1,6 +1,7 @@
 #!/usr/bin/env -S deno run --allow-run --allow-read --allow-env
 
 import { Command } from "@cliffy/command";
+import { Effect } from "effect";
 import pkg from "./deno.json" with { type: "json" };
 import { createBridgeNetworkIfNeeded } from "./src/network.ts";
 import inspect from "./src/subcommands/inspect.ts";
@@ -110,14 +111,17 @@ if (import.meta.main) {
         resolvedInput.startsWith("https://") ||
         resolvedInput.startsWith("http://")
       ) {
-        isoPath = await downloadIso(resolvedInput, options);
+        isoPath = await Effect.runPromise(downloadIso(resolvedInput, options));
       }
 
       if (options.image) {
-        await createDriveImageIfNeeded(options);
+        await Effect.runPromise(createDriveImageIfNeeded(options));
       }
 
-      if (!input && options.image && !await emptyDiskImage(options.image)) {
+      if (
+        !input && options.image &&
+        !await Effect.runPromise(emptyDiskImage(options.image))
+      ) {
         isoPath = null;
       }
 
@@ -125,7 +129,7 @@ if (import.meta.main) {
         await createBridgeNetworkIfNeeded(options.bridge);
       }
 
-      await runQemu(isoPath, options);
+      await Effect.runPromise(runQemu(isoPath, options));
     })
     .command("ps", "List all virtual machines")
     .option("--all, -a", "Show all virtual machines, including stopped ones")

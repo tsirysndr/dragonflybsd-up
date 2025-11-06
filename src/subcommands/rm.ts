@@ -1,14 +1,42 @@
-import { getInstanceState, removeInstanceState } from "../state.ts";
+import { Effect, pipe } from "effect";
+import { getInstanceStateOrFail, removeInstanceState } from "../state.ts";
+
+const removeVirtualMachine = (name: string) =>
+  pipe(
+    getInstanceStateOrFail(name),
+    Effect.flatMap((vm) => {
+      console.log(`Removing virtual machine ${vm.name} (ID: ${vm.id})...`);
+      return removeInstanceState(name);
+    }),
+  );
 
 export default async function (name: string) {
-  const vm = await getInstanceState(name);
-  if (!vm) {
-    console.error(
-      `Virtual machine with name or ID ${name} not found.`,
-    );
-    Deno.exit(1);
-  }
+  const program = pipe(
+    removeVirtualMachine(name),
+    Effect.catchTags({
+      InstanceNotFoundError: (_error) =>
+        Effect.sync(() => {
+          console.error(`Virtual machine with name or ID ${name} not found.`);
+          Deno.exit(1);
+        }),
+      DatabaseQueryError: (error) =>
+        Effect.sync(() => {
+          console.error(`Database error: ${error.message}`);
+          Deno.exit(1);
+        }),
+      DatabaseDeleteError: (error) =>
+        Effect.sync(() => {
+          console.error(`Failed to delete from database: ${error.message}`);
+          Deno.exit(1);
+        }),
+    }),
+    Effect.catchAll((error) =>
+      Effect.sync(() => {
+        console.error(`Error: ${String(error)}`);
+        Deno.exit(1);
+      })
+    ),
+  );
 
-  console.log(`Removing virtual machine ${vm.name} (ID: ${vm.id})...`);
-  await removeInstanceState(name);
+  await Effect.runPromise(program);
 }
