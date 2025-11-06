@@ -72,7 +72,7 @@ if (import.meta.main) {
     )
     .example(
       "Specific version",
-      "dflyhbsd-up 6.4.2",
+      "dflybsd-up 6.4.2",
     )
     .example(
       "Local ISO file",
