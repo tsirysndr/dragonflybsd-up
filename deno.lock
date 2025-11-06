@@ -3,6 +3,7 @@
   "specifiers": {
     "jsr:@cliffy/command@^1.0.0-rc.8": "1.0.0-rc.8",
     "jsr:@cliffy/flags@1.0.0-rc.8": "1.0.0-rc.8",
+    "jsr:@cliffy/flags@^1.0.0-rc.8": "1.0.0-rc.8",
     "jsr:@cliffy/internal@1.0.0-rc.8": "1.0.0-rc.8",
     "jsr:@cliffy/table@1.0.0-rc.8": "1.0.0-rc.8",
     "jsr:@cliffy/table@^1.0.0-rc.8": "1.0.0-rc.8",
@@ -34,7 +35,7 @@
     "@cliffy/command@1.0.0-rc.8": {
       "integrity": "758147790797c74a707e5294cc7285df665422a13d2a483437092ffce40b5557",
       "dependencies": [
-        "jsr:@cliffy/flags",
+        "jsr:@cliffy/flags@1.0.0-rc.8",
         "jsr:@cliffy/internal",
         "jsr:@cliffy/table@1.0.0-rc.8",
         "jsr:@std/fmt@~1.0.2",
@@ -157,6 +158,7 @@
   "workspace": {
     "dependencies": [
       "jsr:@cliffy/command@^1.0.0-rc.8",
+      "jsr:@cliffy/flags@^1.0.0-rc.8",
       "jsr:@cliffy/table@^1.0.0-rc.8",
       "jsr:@db/sqlite@0.12",
       "jsr:@soapbox/kysely-deno-sqlite@^2.2.0",
