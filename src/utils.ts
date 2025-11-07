@@ -336,13 +336,17 @@ const runAttachedQemu = (
   });
 
 export const runQemu = (isoPath: string | null, options: Options) => {
-  const macAddress = generateRandomMacAddress();
-  const name = Moniker.choose();
-  const qemuArgs = buildQemuArgs(isoPath, options, macAddress);
+  return pipe(
+    generateRandomMacAddress(),
+    Effect.flatMap((macAddress) => {
+      const name = Moniker.choose();
+      const qemuArgs = buildQemuArgs(isoPath, options, macAddress);
 
-  return options.detach
-    ? runDetachedQemu(name, isoPath, options, macAddress, qemuArgs)
-    : runAttachedQemu(name, isoPath, options, macAddress, qemuArgs);
+      return options.detach
+        ? runDetachedQemu(name, isoPath, options, macAddress, qemuArgs)
+        : runAttachedQemu(name, isoPath, options, macAddress, qemuArgs);
+    }),
+  );
 };
 
 export function handleInput(input?: string): string {
