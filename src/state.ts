@@ -53,7 +53,7 @@ export const updateInstanceState = (
   Effect.tryPromise({
     try: () =>
       ctx.db.updateTable("virtual_machines")
-        .set({ status, pid })
+        .set({ status, pid, updatedAt: new Date().toISOString() })
         .where((eb) =>
           eb.or([
             eb("name", "=", name),
