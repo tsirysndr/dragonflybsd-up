@@ -104,32 +104,35 @@ if (import.meta.main) {
       "dflybsd-up inspect my-vm",
     )
     .action(async (options: Options, input?: string) => {
-      const resolvedInput = handleInput(input);
-      let isoPath: string | null = resolvedInput;
+      const program = Effect.gen(function* () {
+        const resolvedInput = handleInput(input);
+        let isoPath: string | null = resolvedInput;
 
-      if (
-        resolvedInput.startsWith("https://") ||
-        resolvedInput.startsWith("http://")
-      ) {
-        isoPath = await Effect.runPromise(downloadIso(resolvedInput, options));
-      }
+        if (
+          resolvedInput.startsWith("https://") ||
+          resolvedInput.startsWith("http://")
+        ) {
+          isoPath = yield* downloadIso(resolvedInput, options);
+        }
 
-      if (options.image) {
-        await Effect.runPromise(createDriveImageIfNeeded(options));
-      }
+        if (options.image) {
+          yield* createDriveImageIfNeeded(options);
+        }
 
-      if (
-        !input && options.image &&
-        !await Effect.runPromise(emptyDiskImage(options.image))
-      ) {
-        isoPath = null;
-      }
+        if (
+          !input && options.image &&
+          !(yield* emptyDiskImage(options.image))
+        ) {
+          isoPath = null;
+        }
 
-      if (options.bridge) {
-        await createBridgeNetworkIfNeeded(options.bridge);
-      }
+        if (options.bridge) {
+          yield* createBridgeNetworkIfNeeded(options.bridge);
+        }
+        yield* runQemu(isoPath, options);
+      });
 
-      await Effect.runPromise(runQemu(isoPath, options));
+      await Effect.runPromise(program);
     })
     .command("ps", "List all virtual machines")
     .option("--all, -a", "Show all virtual machines, including stopped ones")
