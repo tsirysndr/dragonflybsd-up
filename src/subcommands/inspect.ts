@@ -4,7 +4,11 @@ import { getInstanceStateOrFail } from "../state.ts";
 const inspectVirtualMachine = (name: string) =>
   pipe(
     getInstanceStateOrFail(name),
-    Effect.flatMap(Effect.log),
+    Effect.tap((vm) =>
+      Effect.sync(() => {
+        console.log(vm);
+      })
+    ),
   );
 
 export default async function (name: string) {

@@ -25,7 +25,7 @@ export class ProcessKillError extends Data.TaggedError("ProcessKillError")<{
   pid: number;
 }> {}
 
-const DEFAULT_VERSION = "6.4.2";
+export const DEFAULT_VERSION = "6.4.2";
 
 export interface Options {
   output?: string;
@@ -39,6 +39,13 @@ export interface Options {
   portForward?: string;
   detach?: boolean;
 }
+
+export const isValidISOurl = (url?: string): boolean => {
+  return Boolean(
+    (url?.startsWith("http://") || url?.startsWith("https://")) &&
+      url?.endsWith(".iso"),
+  );
+};
 
 const du = (path: string) =>
   Effect.tryPromise({
@@ -273,7 +280,7 @@ const runDetachedQemu = (
           catch: (cause) =>
             new CommandExecutionError({
               cause,
-              message: "Failed to start detached QEMU process",
+              message: `Failed to start detached QEMU process: ${cause}`,
             }),
         }),
         Effect.flatMap((qemuPid) =>
