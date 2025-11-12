@@ -30,12 +30,18 @@ with database tracking, background execution, and flexible networking options.
   storage
 - **🌐 Bridge Networking**: Support for bridge networking configurations
 - **🔍 VM Inspection**: List, start, stop, restart, and inspect virtual machines
-- **📋 VM Management**: Remove VMs, view logs with follow mode, and background
+- **📋 VM Operations**: Remove VMs, view logs with follow mode, and background
   execution
 - **🏷️ Automatic MAC Assignment**: Unique MAC addresses generated for each VM
 - **🔧 Custom Port Forwarding**: Flexible port mapping with multiple forwards
   support
 - **🔄 Background Mode**: Run VMs detached from terminal with logging support
+- **🐳 OCI Registry Support**: Push and pull VM images to/from OCI-compliant
+  registries (Docker Hub, GitHub Container Registry, etc.)
+- **📦 Image Management**: Tag, list, and remove local VM images
+- **⚙️ Configuration Files**: Define VM settings in a `vmconfig.toml` file for
+  reproducible setups
+- **🚀 Image-based VMs**: Run VMs directly from saved or pulled images
 
 ## 📋 Prerequisites
 
@@ -136,6 +142,50 @@ dflybsd-up logs my-vm --follow
 dflybsd-up inspect my-vm
 ```
 
+### Configuration File Management
+
+```bash
+# Create a default VM configuration file (vmconfig.toml)
+dflybsd-up init
+
+# Edit the configuration file to customize VM settings
+# Then start the VM using the configuration
+dflybsd-up
+```
+
+### OCI Registry Operations
+
+```bash
+# Login to a registry (e.g., Docker Hub, GitHub Container Registry)
+dflybsd-up login ghcr.io --username your-username
+# or pipe password
+echo $GITHUB_TOKEN | dflybsd-up login ghcr.io --username your-username
+
+# Tag a VM's disk image
+dflybsd-up tag my-vm ghcr.io/username/my-dragonfly-vm:latest
+
+# Push VM image to registry
+dflybsd-up push ghcr.io/username/my-dragonfly-vm:latest
+
+# Pull VM image from registry
+dflybsd-up pull ghcr.io/username/my-dragonfly-vm:latest
+
+# List local VM images
+dflybsd-up images
+
+# Remove a local VM image
+dflybsd-up rmi ghcr.io/username/my-dragonfly-vm:latest
+
+# Run a VM from a pulled image
+dflybsd-up run ghcr.io/username/my-dragonfly-vm:latest
+
+# Run with custom options
+dflybsd-up run ghcr.io/username/my-dragonfly-vm:latest --cpus 4 --memory 8G --detach
+
+# Logout from registry
+dflybsd-up logout ghcr.io
+```
+
 ## ⚙️ Options
 
 | Option           | Short | Description                                 | Default                 |
@@ -150,6 +200,39 @@ dflybsd-up inspect my-vm
 | `--bridge`       | `-b`  | Network bridge name for networking          | None (uses NAT)         |
 | `--detach`       | `-d`  | Run VM in the background                    | `false`                 |
 | `--port-forward` | `-p`  | Custom port forwarding (hostPort:guestPort) | `2222:22`               |
+| `--install`      |       | Persist changes to the VM disk image        | `false`                 |
+
+## 📝 Configuration File
+
+You can create a `vmconfig.toml` file to define default VM settings:
+
+```bash
+# Initialize a configuration file
+dflybsd-up init
+```
+
+This creates a configuration file with the following structure:
+
+```toml
+[vm]
+iso = "https://mirror-master.dragonflybsd.org/iso-images/dfly-x86_64-6.4.2_REL.iso"
+# output = "./dfly-x86_64-6.4.2_REL.iso"
+cpu = "host"
+cpus = 2
+memory = "2G"
+# image = "dragonfly.qcow2"
+disk_format = "qcow2"
+size = "20G"
+
+[network]
+# bridge = "br0"
+port_forward = "2222:22"
+
+[options]
+detach = false
+```
+
+When you run `dflybsd-up` without arguments, it will use the settings from this file. Command-line options override configuration file settings.
 
 ## 🔢 Version Format
 
@@ -169,6 +252,7 @@ the serial console:
 
 1. **Select option `9. Escape to loader prompt (also ESC)`**
 2. **Configure console output:**
+
    ```
    set console=comconsole
    boot
@@ -206,7 +290,49 @@ dflybsd-up restart my-vm          # Restart the VM
 - **Log Management**: Each VM maintains its own log file for debugging and
   monitoring
 
-## 🗃️ Virtual Machine Management
+## � OCI Registry Integration
+
+The tool supports pushing and pulling VM images to/from OCI-compliant registries like Docker Hub, GitHub Container Registry (ghcr.io), and others.
+
+### Workflow
+
+1. **Create and configure a VM** with desired settings
+2. **Tag the VM's disk image** to create a reference
+3. **Login to a registry** with your credentials
+4. **Push the image** to share it with others
+5. **Pull images** created by you or others to run pre-configured VMs
+
+### Example: Sharing a VM Image
+
+```bash
+# Create a VM with persistent storage
+dflybsd-up 6.4.2 --image dragonfly.qcow2 --size 30G
+
+# Configure your DragonflyBSD installation as desired
+# (install packages, configure services, etc.)
+
+# Stop the VM and tag it
+dflybsd-up stop <vm-name>
+dflybsd-up tag <vm-name> ghcr.io/username/my-dragonfly-setup:v1
+
+# Login to GitHub Container Registry
+echo $GITHUB_TOKEN | dflybsd-up login ghcr.io --username username
+
+# Push the image
+dflybsd-up push ghcr.io/username/my-dragonfly-setup:v1
+
+# Others can now pull and run your image
+dflybsd-up pull ghcr.io/username/my-dragonfly-setup:v1
+dflybsd-up run ghcr.io/username/my-dragonfly-setup:v1
+```
+
+### Supported Registries
+
+- **GitHub Container Registry**: `ghcr.io`
+- **Docker Hub**: `docker.io` or just the image name (e.g., `username/image:tag`)
+- Any OCI-compliant registry that supports the OCI Distribution Specification
+
+## �🗃️ Virtual Machine Management
 
 The tool now includes database-backed VM management, allowing you to track and
 manage multiple virtual machines:
@@ -257,7 +383,7 @@ dflybsd-up --port-forward 8080:80,3000:3000,2222:22
 dflybsd-up 6.4.2 --port-forward 8080:80 --memory 4G
 ```
 
-### Bridge Networking
+### Advanced Bridge Networking
 
 For more advanced networking scenarios, use bridge networking:
 
@@ -275,7 +401,7 @@ Benefits of bridge networking:
 - Better performance for network-intensive applications
 - Supports multiple VMs on the same network segment
 
-## �💿 Creating a Persistent Disk
+## 💿 Creating a Persistent Disk
 
 To install DragonflyBSD persistently:
 
@@ -283,12 +409,17 @@ To install DragonflyBSD persistently:
 # Create a disk image (done automatically with --image if image doesn't exist)
 dflybsd-up 6.4.2 --image dragonfly.qcow2 --disk-format qcow2 --size 30G
 
+# Use --install flag to persist changes to the disk image
+dflybsd-up 6.4.2 --image dragonfly.qcow2 --disk-format qcow2 --install
+
 # Or manually create with qemu-img
 qemu-img create -f qcow2 dragonfly.qcow2 20G
 
 # Launch with the disk attached
 dflybsd-up 6.4.2 --image dragonfly.qcow2 --disk-format qcow2
 ```
+
+The `--install` option ensures that changes made during the VM session are written to the disk image, making them persistent across reboots.
 
 ## 🔐 SSH Access
 
