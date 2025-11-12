@@ -1,38 +1,46 @@
-import { Effect, pipe } from "effect";
-import { getInstanceStateOrFail } from "../state.ts";
+import { Data, Effect, pipe } from "effect";
+import type { Image, VirtualMachine } from "../db.ts";
+import { getImage } from "../images.ts";
+import { getInstanceState } from "../state.ts";
 
-const inspectVirtualMachine = (name: string) =>
+class ItemNotFoundError extends Data.TaggedError("ItemNotFoundError")<{
+  name: string;
+}> {}
+
+const find = (name: string) =>
   pipe(
-    getInstanceStateOrFail(name),
-    Effect.tap((vm) =>
-      Effect.sync(() => {
-        console.log(vm);
-      })
+    Effect.all([getInstanceState(name), getImage(name)]),
+    Effect.flatMap(([vm, image]) =>
+      vm || image
+        ? Effect.succeed(vm || image)
+        : Effect.fail(new ItemNotFoundError({ name }))
     ),
+  );
+
+const display = (vm: VirtualMachine | Image | undefined) =>
+  Effect.sync(() => {
+    console.log(vm);
+  });
+
+const handleError = (error: ItemNotFoundError | Error) =>
+  Effect.sync(() => {
+    if (error instanceof ItemNotFoundError) {
+      console.error(
+        `Virtual machine with name or ID ${error.name} not found.`,
+      );
+    } else {
+      console.error(`An error occurred: ${error}`);
+    }
+    Deno.exit(1);
+  });
+
+const inspectEffect = (name: string) =>
+  pipe(
+    find(name),
+    Effect.flatMap(display),
+    Effect.catchAll(handleError),
   );
 
 export default async function (name: string) {
-  const program = pipe(
-    inspectVirtualMachine(name),
-    Effect.catchTags({
-      InstanceNotFoundError: (_error) =>
-        Effect.sync(() => {
-          console.error(`Virtual machine with name or ID ${name} not found.`);
-          Deno.exit(1);
-        }),
-      DatabaseQueryError: (error) =>
-        Effect.sync(() => {
-          console.error(`Database error: ${error.message}`);
-          Deno.exit(1);
-        }),
-    }),
-    Effect.catchAll((error) =>
-      Effect.sync(() => {
-        console.error(`Error: ${String(error)}`);
-        Deno.exit(1);
-      })
-    ),
-  );
-
-  await Effect.runPromise(program);
+  await Effect.runPromise(inspectEffect(name));
 }

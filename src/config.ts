@@ -120,5 +120,6 @@ export const mergeConfig = (
     image: _.get(flags, "image", defaultConfig.vm.image!) as string,
     bridge: _.get(flags, "bridge", defaultConfig.network.bridge!) as string,
     size: _.get(flags, "size", defaultConfig.vm.size!) as string,
+    install: _.get(flags, "install", false) as boolean,
   });
 };

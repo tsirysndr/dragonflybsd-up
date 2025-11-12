@@ -1,59 +1,43 @@
 import { Data, Effect } from "effect";
+import type { DeleteResult, InsertResult, UpdateResult } from "kysely";
 import { ctx } from "./context.ts";
 import type { VirtualMachine } from "./db.ts";
 import type { STATUS } from "./types.ts";
 
-export class DatabaseInsertError
-  extends Data.TaggedError("DatabaseInsertError")<{
-    cause: unknown;
-    message: string;
-  }> {}
-
-export class DatabaseUpdateError
-  extends Data.TaggedError("DatabaseUpdateError")<{
-    cause: unknown;
-    message: string;
-  }> {}
-
-export class DatabaseDeleteError
-  extends Data.TaggedError("DatabaseDeleteError")<{
-    cause: unknown;
-    message: string;
-  }> {}
-
-export class DatabaseQueryError extends Data.TaggedError("DatabaseQueryError")<{
-  cause: unknown;
-  message: string;
+export class DbError extends Data.TaggedError("DatabaseError")<{
+  cause?: unknown;
 }> {}
 
 export class InstanceNotFoundError
   extends Data.TaggedError("InstanceNotFoundError")<{
     name: string;
-    message: string;
+    message?: string;
   }> {}
 
-export const saveInstanceState = (vm: VirtualMachine) =>
+export const saveInstanceState = (
+  vm: VirtualMachine,
+): Effect.Effect<InsertResult[], DbError, never> =>
   Effect.tryPromise({
     try: () =>
       ctx.db.insertInto("virtual_machines")
         .values(vm)
         .execute(),
-    catch: (cause) =>
-      new DatabaseInsertError({
-        cause,
-        message: `Failed to save instance state for VM: ${vm.name}`,
-      }),
+    catch: (error) => new DbError({ cause: error }),
   });
 
 export const updateInstanceState = (
   name: string,
   status: STATUS,
   pid?: number,
-) =>
+): Effect.Effect<UpdateResult[], DbError, never> =>
   Effect.tryPromise({
     try: () =>
       ctx.db.updateTable("virtual_machines")
-        .set({ status, pid, updatedAt: new Date().toISOString() })
+        .set({
+          status,
+          pid,
+          updatedAt: new Date().toISOString(),
+        })
         .where((eb) =>
           eb.or([
             eb("name", "=", name),
@@ -61,14 +45,12 @@ export const updateInstanceState = (
           ])
         )
         .execute(),
-    catch: (cause) =>
-      new DatabaseUpdateError({
-        cause,
-        message: `Failed to update instance state for: ${name}`,
-      }),
+    catch: (error) => new DbError({ cause: error }),
   });
 
-export const removeInstanceState = (name: string) =>
+export const removeInstanceState = (
+  name: string,
+): Effect.Effect<DeleteResult[], DbError, never> =>
   Effect.tryPromise({
     try: () =>
       ctx.db.deleteFrom("virtual_machines")
@@ -79,14 +61,12 @@ export const removeInstanceState = (name: string) =>
           ])
         )
         .execute(),
-    catch: (cause) =>
-      new DatabaseDeleteError({
-        cause,
-        message: `Failed to remove instance state for: ${name}`,
-      }),
+    catch: (error) => new DbError({ cause: error }),
   });
 
-export const getInstanceState = (name: string) =>
+export const getInstanceState = (
+  name: string,
+): Effect.Effect<VirtualMachine | undefined, DbError, never> =>
   Effect.tryPromise({
     try: () =>
       ctx.db.selectFrom("virtual_machines")
@@ -98,11 +78,7 @@ export const getInstanceState = (name: string) =>
           ])
         )
         .executeTakeFirst(),
-    catch: (cause) =>
-      new DatabaseQueryError({
-        cause,
-        message: `Failed to query instance state for: ${name}`,
-      }),
+    catch: (error) => new DbError({ cause: error }),
   });
 
 export const getInstanceStateOrFail = (name: string) =>
