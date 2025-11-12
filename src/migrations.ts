@@ -224,7 +224,11 @@ migrations["008"] = {
       .createTable("volumes")
       .addColumn("id", "varchar", (col) => col.primaryKey())
       .addColumn("name", "varchar", (col) => col.notNull().unique())
-      .addColumn("baseImageId", "varchar", (col) => col.notNull())
+      .addColumn(
+        "baseImageId",
+        "varchar",
+        (col) => col.notNull().references("images.id").onDelete("cascade"),
+      )
       .addColumn("path", "varchar", (col) => col.notNull())
       .addColumn(
         "createdAt",
