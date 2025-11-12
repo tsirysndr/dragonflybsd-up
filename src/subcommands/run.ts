@@ -69,5 +69,6 @@ function mergeFlags(image: Image): Options {
     detach: flags.detach,
     install: false,
     diskFormat: image.format,
+    size: flags.size ? flags.size : "20G",
   };
 }
