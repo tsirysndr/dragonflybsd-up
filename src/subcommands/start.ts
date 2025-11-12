@@ -181,11 +181,6 @@ export default async function (name: string, detach: boolean = false) {
           console.error(`Virtual machine with name or ID ${name} not found.`);
           Deno.exit(1);
         }),
-      DatabaseQueryError: (error) =>
-        Effect.sync(() => {
-          console.error(`Database error: ${error.message}`);
-          Deno.exit(1);
-        }),
     }),
     Effect.catchAll((error) =>
       Effect.sync(() => {
