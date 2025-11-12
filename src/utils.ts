@@ -441,7 +441,7 @@ export function handleInput(input?: string): string {
     return constructDownloadUrl(DEFAULT_VERSION);
   }
 
-  const versionRegex = /^\d{1,2}\.\d{1,2}$/;
+  const versionRegex = /^\d{1,2}\.\d{1,2}\.\d{1,2}$/;
 
   if (versionRegex.test(input)) {
     console.log(
