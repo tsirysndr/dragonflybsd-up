@@ -218,6 +218,27 @@ migrations["007"] = {
   },
 };
 
+migrations["008"] = {
+  async up(db: Kysely<unknown>): Promise<void> {
+    await db.schema
+      .createTable("volumes")
+      .addColumn("id", "varchar", (col) => col.primaryKey())
+      .addColumn("name", "varchar", (col) => col.notNull().unique())
+      .addColumn("baseImageId", "varchar", (col) => col.notNull())
+      .addColumn("path", "varchar", (col) => col.notNull())
+      .addColumn(
+        "createdAt",
+        "varchar",
+        (col) => col.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
+      )
+      .execute();
+  },
+
+  async down(db: Kysely<unknown>): Promise<void> {
+    await db.schema.dropTable("volumes").execute();
+  },
+};
+
 export const migrateToLatest = async (db: Database): Promise<void> => {
   const migrator = new Migrator({ db, provider: migrationProvider });
   const { error } = await migrator.migrateToLatest();

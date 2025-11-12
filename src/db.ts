@@ -49,4 +49,13 @@ export type Image = {
   createdAt?: string;
 };
 
+export type Volume = {
+  id: string;
+  name: string;
+  baseImageId: string;
+  path: string;
+  size?: string;
+  createdAt?: string;
+};
+
 export type Database = Kysely<DatabaseSchema>;
