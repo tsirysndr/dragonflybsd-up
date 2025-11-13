@@ -7,4 +7,4 @@ export * from "./oras.ts";
 export * from "./state.ts";
 export * from "./types.ts";
 export * from "./utils.ts";
-export * from "./volume.ts";
+export * from "./volumes.ts";

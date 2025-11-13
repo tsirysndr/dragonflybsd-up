@@ -1,7 +1,8 @@
 import { Data, Effect, pipe } from "effect";
-import type { Image, VirtualMachine } from "../db.ts";
+import type { Image, VirtualMachine, Volume } from "../db.ts";
 import { getImage } from "../images.ts";
 import { getInstanceState } from "../state.ts";
+import { getVolume } from "../volumes.ts";
 
 class ItemNotFoundError extends Data.TaggedError("ItemNotFoundError")<{
   name: string;
@@ -9,15 +10,15 @@ class ItemNotFoundError extends Data.TaggedError("ItemNotFoundError")<{
 
 const find = (name: string) =>
   pipe(
-    Effect.all([getInstanceState(name), getImage(name)]),
-    Effect.flatMap(([vm, image]) =>
-      vm || image
-        ? Effect.succeed(vm || image)
+    Effect.all([getInstanceState(name), getImage(name), getVolume(name)]),
+    Effect.flatMap(([vm, image, volume]) =>
+      vm || image || volume
+        ? Effect.succeed(vm || image || volume)
         : Effect.fail(new ItemNotFoundError({ name }))
     ),
   );
 
-const display = (vm: VirtualMachine | Image | undefined) =>
+const display = (vm: VirtualMachine | Image | Volume | undefined) =>
   Effect.sync(() => {
     console.log(vm);
   });
