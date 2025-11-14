@@ -3,8 +3,10 @@ import _ from "@es-toolkit/es-toolkit/compat";
 import { Effect, pipe } from "effect";
 import { LOGS_DIR } from "../constants.ts";
 import type { VirtualMachine } from "../db.ts";
+import { getImage } from "../images.ts";
 import { getInstanceStateOrFail, updateInstanceState } from "../state.ts";
 import { setupNATNetworkArgs } from "../utils.ts";
+import { createVolume, getVolume } from "../volumes.ts";
 
 const logStartingMessage = (vm: VirtualMachine) =>
   Effect.sync(() => {
@@ -90,22 +92,28 @@ const logDetachedSuccess = (
     Deno.exit(0);
   });
 
-const startVirtualMachineDetached = (name: string, vm: VirtualMachine) => {
-  const qemuArgs = buildQemuArgs(vm);
-  const logPath = `${LOGS_DIR}/${vm.name}.log`;
-  const fullCommand = buildDetachedCommand(vm, qemuArgs, logPath);
+const startVirtualMachineDetached = (name: string, vm: VirtualMachine) =>
+  Effect.gen(function* () {
+    const volume = yield* createVolumeIfNeeded(vm);
+    const qemuArgs = buildQemuArgs({
+      ...vm,
+      drivePath: volume ? volume.path : vm.drivePath,
+      diskFormat: volume ? "qcow2" : vm.diskFormat,
+    });
+    const logPath = `${LOGS_DIR}/${vm.name}.log`;
+    const fullCommand = buildDetachedCommand(vm, qemuArgs, logPath);
 
-  return pipe(
-    createLogsDirectory(),
-    Effect.flatMap(() => startDetachedQemu(fullCommand)),
-    Effect.flatMap((qemuPid) =>
-      pipe(
-        updateInstanceState(name, "RUNNING", qemuPid),
-        Effect.flatMap(() => logDetachedSuccess(vm, qemuPid, logPath)),
-      )
-    ),
-  );
-};
+    return pipe(
+      createLogsDirectory(),
+      Effect.flatMap(() => startDetachedQemu(fullCommand)),
+      Effect.flatMap((qemuPid) =>
+        pipe(
+          updateInstanceState(name, "RUNNING", qemuPid),
+          Effect.flatMap(() => logDetachedSuccess(vm, qemuPid, logPath)),
+        )
+      ),
+    );
+  });
 
 const startAttachedQemu = (
   name: string,
@@ -146,11 +154,49 @@ const validateQemuExit = (status: Deno.CommandStatus) =>
     }
   });
 
-const startVirtualMachineAttached = (name: string, vm: VirtualMachine) => {
-  const qemuArgs = buildQemuArgs(vm);
+const createVolumeIfNeeded = (vm: VirtualMachine) =>
+  Effect.gen(function* () {
+    const { flags } = parseFlags(Deno.args);
+    if (!flags.volume) {
+      return;
+    }
+    const volume = yield* getVolume(flags.volume as string);
+    if (volume) {
+      return volume;
+    }
 
+    if (!vm.drivePath) {
+      throw new Error(
+        `Cannot create volume: Virtual machine ${vm.name} has no drivePath defined.`,
+      );
+    }
+
+    let image = yield* getImage(vm.drivePath);
+
+    if (!image) {
+      const volume = yield* getVolume(vm.drivePath);
+      if (volume) {
+        image = yield* getImage(volume.baseImageId);
+      }
+    }
+
+    const newVolume = yield* createVolume(flags.volume as string, image!);
+    return newVolume;
+  });
+
+const startVirtualMachineAttached = (name: string, vm: VirtualMachine) => {
   return pipe(
-    startAttachedQemu(name, vm, qemuArgs),
+    createVolumeIfNeeded(vm),
+    Effect.flatMap((volume) =>
+      Effect.succeed(
+        buildQemuArgs({
+          ...vm,
+          drivePath: volume ? volume.path : vm.drivePath,
+          diskFormat: volume ? "qcow2" : vm.diskFormat,
+        }),
+      )
+    ),
+    Effect.flatMap((qemuArgs) => startAttachedQemu(name, vm, qemuArgs)),
     Effect.flatMap(validateQemuExit),
   );
 };

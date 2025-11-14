@@ -49,6 +49,7 @@ export interface Options {
   portForward?: string;
   detach?: boolean;
   install?: boolean;
+  volume?: string;
 }
 
 export const getCurrentArch = (): string => {

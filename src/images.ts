@@ -32,6 +32,7 @@ export const getImage = (
             ]),
             eb("id", "=", id),
             eb("digest", "=", id),
+            eb("path", "=", id),
           ])
         )
         .executeTakeFirst(),
