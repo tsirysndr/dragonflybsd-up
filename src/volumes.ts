@@ -30,6 +30,7 @@ export const getVolume = (
           eb.or([
             eb("name", "=", id),
             eb("id", "=", id),
+            eb("path", "=", id),
           ])
         )
         .executeTakeFirst(),
