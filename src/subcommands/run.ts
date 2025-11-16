@@ -84,8 +84,12 @@ export default async function (
 function mergeFlags(image: Image): Options {
   const { flags } = parseFlags(Deno.args);
   return {
-    cpu: (flags.cpu || flags.c) ? (flags.cpu || flags.c) : "host",
-    cpus: (flags.cpus || flags.C) ? (flags.cpus || flags.C) : 2,
+    cpu: (flags.cpu || flags.c)
+      ? (flags.cpu || flags.c)
+      : Deno.build.arch === "aarch64"
+      ? "max"
+      : "host",
+    cpus: (flags.cpus || flags.C) ? (flags.cpus || flags.C) : 4,
     memory: (flags.memory || flags.m) ? (flags.memory || flags.m) : "2G",
     image: image.path,
     bridge: flags.bridge || flags.b,
@@ -94,6 +98,6 @@ function mergeFlags(image: Image): Options {
     install: false,
     diskFormat: image.format,
     volume: flags.volume || flags.v,
-    size: flags.size || flags.s,
+    size: flags.size || flags.s || "20G",
   };
 }
