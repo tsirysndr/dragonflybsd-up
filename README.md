@@ -42,6 +42,8 @@ with database tracking, background execution, and flexible networking options.
 - **⚙️ Configuration Files**: Define VM settings in a `vmconfig.toml` file for
   reproducible setups
 - **🚀 Image-based VMs**: Run VMs directly from saved or pulled images
+- **🌐 HTTP API**: RESTful API for programmatic VM, image, and volume management
+  with bearer token authentication
 
 ## 📋 Prerequisites
 
@@ -186,6 +188,134 @@ dflybsd-up run ghcr.io/username/my-dragonfly-vm:latest --cpus 4 --memory 8G --de
 dflybsd-up logout ghcr.io
 ```
 
+### HTTP API Server
+
+```bash
+# Start the HTTP API server (default port: 8893)
+dflybsd-up serve
+
+# Start on a custom port
+dflybsd-up serve --port 9000
+
+# Set a custom API token via environment variable
+export DFLYBSD_UP_API_TOKEN="your-secure-token"
+dflybsd-up serve
+
+# If no token is set, a random UUID will be generated and displayed
+```
+
+The HTTP API provides RESTful endpoints for:
+
+- **Machines**: List, create, start, stop, restart, inspect, and remove VMs
+- **Images**: Create, list and remove VM images
+- **Volumes**: List, create, inspect, and remove volumes
+
+All endpoints require bearer token authentication. See the API documentation
+section below for detailed endpoint information.
+
+## 🌐 HTTP API
+
+The HTTP API server provides programmatic access to all dflybsd-up functionality
+through RESTful endpoints.
+
+### Starting the API Server
+
+```bash
+# Start with default settings (port 8893)
+dflybsd-up serve
+
+# Custom port
+dflybsd-up serve --port 9000
+
+# Set custom token via environment variable
+export DFLYBSD_UP_API_TOKEN="your-secure-token"
+dflybsd-up serve
+```
+
+### Authentication
+
+All API endpoints require bearer token authentication. Include the token in the
+`Authorization` header:
+
+```bash
+curl -H "Authorization: Bearer your-token" http://localhost:8893/machines
+```
+
+### API Endpoints
+
+#### Machines
+
+- **GET `/machines`** - List all machines
+  - Query params: `?all=true` to include stopped machines
+- **POST `/machines`** - Create a new machine
+  - Body:
+    `{ "image": "ghcr.io/tsirysndr/dragonflybsd:6.4.2", "cpus": 4, "memory": "4G", "bridge": "br0", "portForward": ["2222:22"], "volume": "volume-name" }`
+- **GET `/machines/:id`** - Get machine details
+- **POST `/machines/:id/start`** - Start a machine
+  - Body (optional):
+    `{ "cpus": 4, "memory": "4G", "cpu": "host", "portForward": ["2222:22"] }`
+- **POST `/machines/:id/stop`** - Stop a machine
+- **POST `/machines/:id/restart`** - Restart a machine
+  - Body (optional):
+    `{ "cpus": 4, "memory": "4G", "cpu": "host", "portForward": ["2222:22"] }`
+- **DELETE `/machines/:id`** - Remove a machine (must be stopped)
+
+#### Images
+
+- **GET `/images`** - List all local images
+- **POST `/images/pull`** - Pull an image from registry
+  - Body: `{ "image": "ghcr.io/user/image:tag" }`
+- **POST `/images/push`** - Push an image to registry
+  - Body: `{ "image": "ghcr.io/user/image:tag" }`
+- **POST `/images/tag`** - Tag a machine's image
+  - Body: `{ "vmName": "machine-name", "image": "ghcr.io/user/image:tag" }`
+- **DELETE `/images/:ref`** - Remove an image
+  - Path param: URL-encoded image reference
+
+#### Volumes
+
+- **GET `/volumes`** - List all volumes
+- **POST `/volumes`** - Create a new volume
+  - Body: `{ "name": "volume-name", "size": "20G", "format": "qcow2" }`
+- **GET `/volumes/:name`** - Get volume details
+- **DELETE `/volumes/:name`** - Remove a volume
+
+### Example API Usage
+
+```bash
+# List all machines
+curl -H "Authorization: Bearer your-token" \
+  http://localhost:8893/machines?all=true
+
+# Create a new machine
+curl -X POST \
+  -H "Authorization: Bearer your-token" \
+  -H "Content-Type: application/json" \
+  -d '{"image":"ghcr.io/tsirysndr/dragonflybsd:6.4.2","cpus":4,"memory":"8G"}' \
+  http://localhost:8893/machines
+
+# Start a machine
+curl -X POST \
+  -H "Authorization: Bearer your-token" \
+  -H "Content-Type: application/json" \
+  -d '{"cpus":8,"memory":"16G"}' \
+  http://localhost:8893/machines/clxy1234567890/start
+
+# Pull an image
+curl -X POST \
+  -H "Authorization: Bearer your-token" \
+  -H "Content-Type: application/json" \
+  -d '{"image":"ghcr.io/tsirysndr/dragonfly:latest"}' \
+  http://localhost:8893/images/pull
+
+# Create a volume
+curl -X POST \
+  -H "Authorization: Bearer your-token" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"data-volume","size":"50G","format":"qcow2"}' \
+  http://localhost:8893/volumes
+```
+
 ## ⚙️ Options
 
 | Option           | Short | Description                                 | Default                 |
@@ -232,7 +362,8 @@ port_forward = "2222:22"
 detach = false
 ```
 
-When you run `dflybsd-up` without arguments, it will use the settings from this file. Command-line options override configuration file settings.
+When you run `dflybsd-up` without arguments, it will use the settings from this
+file. Command-line options override configuration file settings.
 
 ## 🔢 Version Format
 
@@ -292,7 +423,8 @@ dflybsd-up restart my-vm          # Restart the VM
 
 ## � OCI Registry Integration
 
-The tool supports pushing and pulling VM images to/from OCI-compliant registries like Docker Hub, GitHub Container Registry (ghcr.io), and others.
+The tool supports pushing and pulling VM images to/from OCI-compliant registries
+like Docker Hub, GitHub Container Registry (ghcr.io), and others.
 
 ### Workflow
 
@@ -329,7 +461,8 @@ dflybsd-up run ghcr.io/username/my-dragonfly-setup:v1
 ### Supported Registries
 
 - **GitHub Container Registry**: `ghcr.io`
-- **Docker Hub**: `docker.io` or just the image name (e.g., `username/image:tag`)
+- **Docker Hub**: `docker.io` or just the image name (e.g.,
+  `username/image:tag`)
 - Any OCI-compliant registry that supports the OCI Distribution Specification
 
 ## �🗃️ Virtual Machine Management
@@ -419,7 +552,8 @@ qemu-img create -f qcow2 dragonfly.qcow2 20G
 dflybsd-up 6.4.2 --image dragonfly.qcow2 --disk-format qcow2
 ```
 
-The `--install` option ensures that changes made during the VM session are written to the disk image, making them persistent across reboots.
+The `--install` option ensures that changes made during the VM session are
+written to the disk image, making them persistent across reboots.
 
 ## 🔐 SSH Access
 
