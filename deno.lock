@@ -41,6 +41,7 @@
     "npm:chalk@^5.6.2": "5.6.2",
     "npm:dayjs@^1.11.19": "1.11.19",
     "npm:effect@^3.19.2": "3.19.2",
+    "npm:hono@^4.10.6": "4.10.6",
     "npm:kysely@0.27.6": "0.27.6",
     "npm:kysely@~0.27.2": "0.27.6",
     "npm:moniker@~0.1.2": "0.1.2"
@@ -230,6 +231,9 @@
         "pure-rand"
       ]
     },
+    "hono@4.10.6": {
+      "integrity": "sha512-BIdolzGpDO9MQ4nu3AUuDwHZZ+KViNm+EZ75Ae55eMXMqLVhDFqEMXxtUe9Qh8hjL+pIna/frs2j6Y2yD5Ua/g=="
+    },
     "kysely@0.27.6": {
       "integrity": "sha512-FIyV/64EkKhJmjgC0g2hygpBv5RNWVPyNCqSAD7eTCv6eFWNIi4PN1UvdSJGicN/o35bnevgis4Y0UDC0qi8jQ=="
     },
@@ -261,6 +265,7 @@
       "npm:chalk@^5.6.2",
       "npm:dayjs@^1.11.19",
       "npm:effect@^3.19.2",
+      "npm:hono@^4.10.6",
       "npm:kysely@0.27.6",
       "npm:moniker@~0.1.2"
     ]

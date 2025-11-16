@@ -4,20 +4,20 @@ import { Data, Effect, pipe } from "effect";
 import type { VirtualMachine } from "../db.ts";
 import { getInstanceState, updateInstanceState } from "../state.ts";
 
-class VmNotFoundError extends Data.TaggedError("VmNotFoundError")<{
+export class VmNotFoundError extends Data.TaggedError("VmNotFoundError")<{
   name: string;
 }> {}
 
-class StopCommandError extends Data.TaggedError("StopCommandError")<{
+export class StopCommandError extends Data.TaggedError("StopCommandError")<{
   vmName: string;
   exitCode: number;
 }> {}
 
-class CommandError extends Data.TaggedError("CommandError")<{
+export class CommandError extends Data.TaggedError("CommandError")<{
   cause?: unknown;
 }> {}
 
-const findVm = (name: string) =>
+export const findVm = (name: string) =>
   pipe(
     getInstanceState(name),
     Effect.flatMap((vm) =>
@@ -34,7 +34,7 @@ const logStopping = (vm: VirtualMachine) =>
     );
   });
 
-const killProcess = (vm: VirtualMachine) =>
+export const killProcess = (vm: VirtualMachine) =>
   Effect.tryPromise({
     try: async () => {
       const cmd = new Deno.Command(vm.bridge ? "sudo" : "kill", {
@@ -63,10 +63,10 @@ const killProcess = (vm: VirtualMachine) =>
     ),
   );
 
-const updateToStopped = (vm: VirtualMachine) =>
+export const updateToStopped = (vm: VirtualMachine) =>
   pipe(
     updateInstanceState(vm.name, "STOPPED"),
-    Effect.map(() => vm),
+    Effect.map(() => ({ ...vm, status: "STOPPED" } as VirtualMachine)),
   );
 
 const logSuccess = (vm: VirtualMachine) =>

@@ -92,3 +92,20 @@ export const getInstanceStateOrFail = (name: string) =>
         }),
       ),
   );
+
+export const listInstances = (
+  all: boolean,
+): Effect.Effect<VirtualMachine[], DbError, never> =>
+  Effect.tryPromise({
+    try: () =>
+      ctx.db.selectFrom("virtual_machines")
+        .selectAll()
+        .where((eb) => {
+          if (all) {
+            return eb("id", "!=", "");
+          }
+          return eb("status", "=", "RUNNING");
+        })
+        .execute(),
+    catch: (error) => new DbError({ cause: error }),
+  });
