@@ -172,7 +172,7 @@ const pushToRegistry = (
           "--annotation",
           "org.opencontainers.image.os=dragonflybsd",
           "--annotation",
-          "org.opencontainers.image.description=QEMU raw disk image",
+          "org.opencontainers.image.description=QEMU raw disk image for DragonFly BSD",
           basename(img.path),
         ],
         stdout: "inherit",
