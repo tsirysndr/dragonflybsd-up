@@ -170,7 +170,7 @@ const pushToRegistry = (
           "--annotation",
           "org.opencontainers.image.architecture=amd64",
           "--annotation",
-          "org.opencontainers.image.os=openbsd",
+          "org.opencontainers.image.os=dragonflybsd",
           "--annotation",
           "org.opencontainers.image.description=QEMU raw disk image",
           basename(img.path),
