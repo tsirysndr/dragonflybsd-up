@@ -25,7 +25,7 @@ import start from "./src/subcommands/start.ts";
 import stop from "./src/subcommands/stop.ts";
 import tag from "./src/subcommands/tag.ts";
 import * as volumes from "./src/subcommands/volume.ts";
-
+import serve from "./src/api/mod.ts";
 import { getImage } from "./src/images.ts";
 import { getImageArchivePath } from "./src/mod.ts";
 import {
@@ -406,5 +406,10 @@ if (import.meta.main) {
         }),
     )
     .description("Manage volumes")
+    .command("serve", "Start the dflybsd-up HTTP API server")
+    .option("-p, --port <port:number>", "Port to listen on", { default: 8893 })
+    .action(() => {
+      serve();
+    })
     .parse(Deno.args);
 }
